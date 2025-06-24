@@ -25,7 +25,33 @@ exports.getPaymentsByStudent = async (req, res) => {
     const payments = await Payment.find({
       studentId: req.params.studentId,
     }).populate("studentId");
-    res.json(payments);
+
+    let student = null;
+
+    if (payments.length) {
+      student = payments[0].studentId;
+      const paymentsArray = payments.map((payment) => ({
+        _id: payment._id,
+        amount: payment.amount,
+        method: payment.method,
+        remarks: payment.remarks,
+        paymentDate: payment.paymentDate,
+      }));
+
+      res.json({
+        student,
+        payments: paymentsArray,
+      });
+    } else {
+      student = await Student.findById(req.params.studentId);
+      if (!student) {
+        return res.status(404).json({ error: "Student not found." });
+      }
+      res.json({
+        student,
+        payments: [],
+      });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
